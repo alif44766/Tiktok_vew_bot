@@ -1,10 +1,11 @@
 {
   "name": "tiktok-view-bot",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "main": "index.js",
   "dependencies": {
     "puppeteer": "^22.0.0",
     "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "proxy-chain": "^2.3.0"
   }
 }
