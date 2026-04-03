@@ -1,5 +1,7 @@
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const proxyChain = require('proxy-chain');
+
 puppeteer.use(StealthPlugin());
 
 const videoUrl = 'https://vm.tiktok.com/ZS98ChGB63YvN-KaPdM/';
@@ -9,37 +11,33 @@ const rawProxies = [
     'socks5://change5.owlproxy.com:7778:EZlobIk9YH50_custom_zone_AE_st__city_sid_11124706_time_5:2573895',
     'socks5://change5.owlproxy.com:7778:EZlobIk9YH50_custom_zone_AE_st__city_sid_84600031_time_5:2573895',
     'socks5://change5.owlproxy.com:7778:EZlobIk9YH50_custom_zone_AL_st__city_sid_16459351_time_5:2573895',
-    'socks5://change5.owlproxy.com:7778:EZlobIk9YH50_custom_zone_AL_st__city_sid_41265629_time_5:2573895'
+    'socks5://change5.owlproxy.com:7778:EZlobIk9YH50_custom_zone_AL_st__city_sid_33179191_time_5:2573895'
 ];
 
 async function runView(rawProxy) {
-    // প্রক্সি ডাটা আলাদা করা (Host:Port এবং User:Pass)
     const parts = rawProxy.split(':');
-    const proxyHost = `${parts[1].replace('//', '')}:${parts[2]}`;
-    const proxyUser = parts[3];
-    const proxyPass = parts[4];
+    const host = parts[1].replace('//', '');
+    const port = parts[2];
+    const user = parts[3];
+    const pass = parts[4];
 
-    console.log(`\n[#] কানেক্ট হচ্ছে: ${proxyHost} (User: ${proxyUser})`);
+    // SOCKS5 কে লোকাল HTTP প্রক্সিতে রূপান্তর
+    const oldProxyUrl = `socks5://${user}:${pass}@${host}:${port}`;
+    const newProxyUrl = await proxyChain.anonymizeProxy(oldProxyUrl);
+
+    console.log(`\n[#] কানেক্ট হচ্ছে: ${host}:${port}`);
 
     const browser = await puppeteer.launch({
         headless: "new",
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            `--proxy-server=socks5://${proxyHost}` // এখানে শুধু হোস্ট ও পোর্ট থাকবে
+            `--proxy-server=${newProxyUrl}`
         ]
     });
 
     try {
         const page = await browser.newPage();
-        
-        // প্রক্সি ইউজার ও পাসওয়ার্ড দিয়ে লগ-ইন
-        await page.authenticate({
-            username: proxyUser,
-            password: proxyPass
-        });
-
         await page.setViewport({ width: 1280, height: 720 });
         
         // ভিডিও লিঙ্কে যাওয়া
@@ -53,6 +51,7 @@ async function runView(rawProxy) {
         console.log(`[!] এরর: ${err.message}`);
     } finally {
         await browser.close();
+        await proxyChain.closeAnonymizedProxy(newProxyUrl, true);
     }
 }
 
