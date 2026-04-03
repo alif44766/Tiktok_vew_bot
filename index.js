@@ -4,48 +4,51 @@ puppeteer.use(StealthPlugin());
 
 const videoUrl = 'https://vm.tiktok.com/ZS98ChGB63YvN-KaPdM/';
 
-// আপনার দেওয়া প্রক্সি লিস্ট (সঠিক ফরম্যাটে সাজানো)
-const proxies = [
-    'socks5://EZlobIk9YH50_custom_zone_AE_st__city_sid_52974162_time_5:2573895@change5.owlproxy.com:7778',
-    'socks5://EZlobIk9YH50_custom_zone_AE_st__city_sid_11124706_time_5:2573895@change5.owlproxy.com:7778',
-    'socks5://EZlobIk9YH50_custom_zone_AE_st__city_sid_84600031_time_5:2573895@change5.owlproxy.com:7778',
-    'socks5://EZlobIk9YH50_custom_zone_AL_st__city_sid_16459351_time_5:2573895@change5.owlproxy.com:7778',
-    'socks5://EZlobIk9YH50_custom_zone_AL_st__city_sid_41265629_time_5:2573895@change5.owlproxy.com:7778'
+const rawProxies = [
+    'socks5://change5.owlproxy.com:7778:EZlobIk9YH50_custom_zone_AE_st__city_sid_52974162_time_5:2573895',
+    'socks5://change5.owlproxy.com:7778:EZlobIk9YH50_custom_zone_AE_st__city_sid_11124706_time_5:2573895',
+    'socks5://change5.owlproxy.com:7778:EZlobIk9YH50_custom_zone_AE_st__city_sid_84600031_time_5:2573895',
+    'socks5://change5.owlproxy.com:7778:EZlobIk9YH50_custom_zone_AL_st__city_sid_16459351_time_5:2573895',
+    'socks5://change5.owlproxy.com:7778:EZlobIk9YH50_custom_zone_AL_st__city_sid_41265629_time_5:2573895'
 ];
 
-async function runView(proxy) {
-    console.log(`\n[#] শুরু হচ্ছে প্রক্সি: ${proxy.split('@')[0]}`);
-    
+async function runView(rawProxy) {
+    // প্রক্সি ডাটা আলাদা করা (Host:Port এবং User:Pass)
+    const parts = rawProxy.split(':');
+    const proxyHost = `${parts[1].replace('//', '')}:${parts[2]}`;
+    const proxyUser = parts[3];
+    const proxyPass = parts[4];
+
+    console.log(`\n[#] কানেক্ট হচ্ছে: ${proxyHost} (User: ${proxyUser})`);
+
     const browser = await puppeteer.launch({
         headless: "new",
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
-            `--proxy-server=${proxy}`
+            `--proxy-server=socks5://${proxyHost}` // এখানে শুধু হোস্ট ও পোর্ট থাকবে
         ]
     });
 
     try {
         const page = await browser.newPage();
         
-        // প্রক্সি অথেন্টিকেশন হ্যান্ডেল করা
-        const authPart = proxy.split('://')[1].split('@')[0];
-        const [username, password] = authPart.split(':');
-        await page.authenticate({ username, password });
+        // প্রক্সি ইউজার ও পাসওয়ার্ড দিয়ে লগ-ইন
+        await page.authenticate({
+            username: proxyUser,
+            password: proxyPass
+        });
 
-        // স্ক্রিন সাইজ সেট করা (আসল ডিভাইসের মতো দেখাতে)
         await page.setViewport({ width: 1280, height: 720 });
-
+        
         // ভিডিও লিঙ্কে যাওয়া
         await page.goto(videoUrl, { waitUntil: 'networkidle2', timeout: 60000 });
         
-        console.log('--- ভিডিও লোড হয়েছে, ২০ সেকেন্ড দেখা হচ্ছে... ---');
-        
-        // ভিডিও প্লে করার জন্য কিছুক্ষণ অপেক্ষা
+        console.log('--- ভিডিও দেখা হচ্ছে (২০ সেকেন্ড)... ---');
         await new Promise(resolve => setTimeout(resolve, 20000)); 
 
-        console.log('[✔] সাকসেস: ভিউ কাউন্ট হয়েছে!');
+        console.log('[✔] সাকসেস!');
     } catch (err) {
         console.log(`[!] এরর: ${err.message}`);
     } finally {
@@ -54,11 +57,11 @@ async function runView(proxy) {
 }
 
 async function start() {
-    for (let i = 0; i < proxies.length; i++) {
+    for (let i = 0; i < rawProxies.length; i++) {
         console.log(`\n--- প্রসেস নং: ${i + 1} ---`);
-        await runView(proxies[i]);
+        await runView(rawProxies[i]);
     }
-    console.log("\n[!] সব প্রক্সি শেষ। কাজ সম্পন্ন।");
+    console.log("\n[!] কাজ শেষ।");
 }
 
 start();
