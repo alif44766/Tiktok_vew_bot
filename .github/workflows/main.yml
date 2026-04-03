@@ -1,4 +1,4 @@
-name: TikTok View Bot Updated
+name: TikTok View Bot Final Fix
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22' # আপডেট করা হয়েছে
 
       - name: Install Google Chrome
         run: |
