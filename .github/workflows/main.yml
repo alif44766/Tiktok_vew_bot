@@ -1,28 +1,31 @@
-name: TikTok View Bot Final Fix
+name: TikTok Bot Run
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # এটি দিলে আপনি ম্যানুয়ালি রান করতে পারবেন
 
 jobs:
-  run-bot:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22' # আপডেট করা হয়েছে
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
 
-      - name: Install Google Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
-      - name: Install Dependencies
-        run: npm install
+    - name: Install Chrome
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
 
-      - name: Execute Bot
-        run: node index.js
+    - name: Run Bot
+      run: python bot.py
+      
